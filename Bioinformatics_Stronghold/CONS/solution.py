@@ -60,19 +60,40 @@ T: 1 5 0 0 0 1 1 6
 """
 
 import argparse
-import re
+from Bio import SeqIO
 
+### COULD GREATLY IMPROVE IM JUST REALLY TIRED RN AND WANNA GO TO BED HAHA
 def consensus_and_profile(filename):
-    s, t = open(filename, 'r').read().strip().split()
-    return [match.start() + 1 for match in re.finditer(f'(?={t})', s)]
+    fastas = list(SeqIO.parse(open(filename), 'fasta'))
+    profile_matrix = []
+    for i in range(len(fastas[0].seq)):
+        profile_matrix.append([0] * 4)
+    map = {'A' : 0, 'C' : 1, 'G' : 2, 'T' : 3}
+    for fasta in fastas:
+        for i in range(0, len(fasta.seq)):
+            profile_matrix[i][map[fasta.seq[i]]] += 1
+
+    rev_map = {0 : 'A', 1 : 'C', 2 : 'G', 3 : 'T'}
+    rtn = ""
+    for counts in profile_matrix:
+        rtn += rev_map[counts.index(max(counts))]
+    rtn += '\n'
+
+    for key in map:
+        rtn += key + ": "
+        for i in range(len(profile_matrix)):
+            rtn += str(profile_matrix[i][map[key]]) + " "
+        rtn += '\n'
+    return rtn
+
 
 def main():
     parser = argparse.ArgumentParser(description="solve with file")
     parser.add_argument('file_path', help='path to file', type=str)
     args = parser.parse_args()
 
-    locations = consensus_and_profile(args.file_path)
-    print(*locations)
+    output = consensus_and_profile(args.file_path)
+    print(output)
 
 if __name__ == '__main__':
     main()
